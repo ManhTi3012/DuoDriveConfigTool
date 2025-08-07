@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Motor Driver Configurator</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      margin: 2rem;
+      max-width: 800px;
+    }
+    textarea {
+      width: 100%;
+      height: 200px;
+      margin-top: 1rem;
+      resize: vertical;
+    }
+    input[type="text"] {
+      width: 80%;
+      padding: 8px;
+    }
+    button {
+      padding: 8px 12px;
+      margin-top: 8px;
+    }
+    .controls {
+      margin-top: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <h1>Motor Driver Configurator</h1>
+
+  <button id="connectBtn">🔌 Connect to UART</button>
+  <div class="controls">
+    <input type="text" id="commandInput" placeholder="Enter command (e.g., SET Kp 10.5)" />
+    <button id="sendBtn">Send</button>
+  </div>
+
+  <textarea id="outputLog" readonly placeholder="UART logs will appear here..."></textarea>
+
+  <script>
+    let port, reader, writer;
+    const connectBtn = document.getElementById("connectBtn");
+    const sendBtn = document.getElementById("sendBtn");
+    const commandInput = document.getElementById("commandInput");
+    const outputLog = document.getElementById("outputLog");
+
+    // Append to log
+    function log(msg) {
+      outputLog.value += msg + "\n";
+      outputLog.scrollTop = outputLog.scrollHeight;
+    }
+
+    // Connect to serial port
+    connectBtn.onclick = async () => {
+      try {
+        port = await navigator.serial.requestPort();
+        await port.open({ baudRate: 115200 });
+        log("✅ Serial port opened");
+
+        writer = port.writable.getWriter();
+        reader = port.readable.getReader();
+
+        // Read loop
+        const decoder = new TextDecoder();
+        while (port.readable) {
+          const { value, done } = await reader.read();
+          if (done) break;
+          log("🔽 " + decoder.decode(value));
+        }
+      } catch (err) {
+        log("❌ " + err.message);
+      }
+    };
+
+    // Send command
+    sendBtn.onclick = async () => {
+      if (!writer) {
+        log("⚠️ Not connected to any serial port!");
+        return;
+      }
+
+      const command = commandInput.value.trim();
+      if (command) {
+        const data = new TextEncoder().encode(command + "\n");
+        await writer.write(data);
+        log("🔼 " + command);
+        commandInput.value = "";
+      }
+    };
+  </script>
+</body>
+</html>
