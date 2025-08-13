@@ -55,9 +55,12 @@
       color: white;
       font-family: Impact, sans-serif;
       border: none;
-      padding: 10px 20px;
       border-radius: 8px;
       cursor: pointer;
+      padding: 10px;
+      font-size: 1rem;
+      border-radius: 8px;
+      margin: 0.5rem 0;
     }
 
     button:hover { opacity: 0.85; }
@@ -151,7 +154,6 @@
     <!-- Motor 1 -->
     <div class="box">
       <div class="title">MOTOR 1</div>
-      <div> </div>
       <div class="pid-grid">
         <div></div>
         <div class="label">POSITION</div>
@@ -215,9 +217,10 @@ async function connectSerial() {
 }
 async function sendCommand(cmd) {
   if (!writer) { logOutput("Not connected."); return; }
-  const data = new TextEncoder().encode(cmd + "\n");
+  const formatted = `#${cmd}\n`;
+  const data = new TextEncoder().encode(formatted);
   await writer.write(data);
-  logOutput(">> " + cmd);
+  logOutput(">> " + formatted.trim());
 }
 function logOutput(text) {
   const log = document.getElementById("outputLog");
